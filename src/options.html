@@ -130,6 +130,44 @@
         <select id="open_container_9">
         </select>
       </label></p>
+      <h3 data-i18n-message-id="sitekeyPatterns"></h3>
+      <p><em data-i18n-message-id="editSitekeyPatterns"></em></p>
+      <details class="sitekey-pattern-container">
+        <summary data-i18n-message-id="advancedSitekeyPatternsSettings"></summary>
+        <div class="sitekey-pattern">
+          <div class="sitekey-part" data-part-id="pattern">
+            <span data-i18n-message-id="sitekeyPattern"></span>
+            <div class="sitekey-row">
+              <button data-btn-id="sitekey-remove" type="button" disabled>-</button>
+              <button data-btn-id="sitekey-add" type="button" disabled>+</button>
+            </div>
+          </div>
+          <div class="sitekey-part" data-part-id="hostname">
+            <span>hostname:</span>
+            <div class="sitekey-row">
+              <input type="text" value="" />
+              <button data-btn-id="sitekey-remove" type="button" disabled>-</button>
+              <button data-btn-id="sitekey-add" type="button" disabled>+</button>
+            </div>
+          </div>
+          <div class="sitekey-part" data-part-id="pathname">
+            <span>pathname:</span>
+            <div class="sitekey-row">
+              <input type="text" value="" disabled />
+              <button data-btn-id="sitekey-remove" type="button" disabled>-</button>
+              <button data-btn-id="sitekey-add" type="button" disabled>+</button>
+            </div>
+          </div>
+          <div class="sitekey-part" data-part-id="search">
+            <span>search:</span>
+            <div class="sitekey-row">
+              <input type="text" value="" disabled />
+              <button data-btn-id="sitekey-remove" type="button" disabled>-</button>
+              <button data-btn-id="sitekey-add" type="button" disabled>+</button>
+            </div>
+          </div>
+        </div>
+      </details>
       <h3 data-i18n-message-id="onboarding"></h3>
       <button data-btn-id="reset-onboarding" data-i18n-message-id="resetOnboardingPanels"></button>
       <p><em data-i18n-message-id="onboardingToggle"></em></p>

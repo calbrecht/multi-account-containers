@@ -110,6 +110,49 @@ h3.moz-vpn-proxy-permissions-title::after {
   margin-inline-end: -50%;
 }
 
+.sitekey-pattern {
+  display: grid;
+  grid-row-gap: 0.4rem;
+  margin-block-start: 0.8rem;
+}
+
+.sitekey-part {
+  display: grid;
+  grid-template-columns: [label] minmax(6rem, max-content) [input] auto [remove] min-content [add] min-content [end];
+  grid-gap: 0.4rem;
+}
+
+.sitekey-part > span {
+  grid-column: label;
+}
+
+.sitekey-part[data-part-id="pattern"] > span {
+  grid-column: label / remove;
+}
+
+.sitekey-row {
+  display: grid;
+  grid-column: input / end;
+  grid-template-columns: subgrid;
+  grid-row-gap: 0.4rem;
+}
+
+.sitekey-part[data-part-id="pattern"] .sitekey-row {
+  grid-column: remove / end;
+}
+
+.sitekey-row input {
+  grid-column: input;
+}
+
+.sitekey-row button[data-btn-id*="add"] {
+  grid-column: add;
+}
+
+.sitekey-row button[data-btn-id*="remove"] {
+  grid-column: remove;
+}
+
 @media (prefers-color-scheme: dark) {
   body {
     background: #23212a;

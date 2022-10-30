@@ -9,11 +9,84 @@ window.assignManager = {
     area: browser.storage.local,
     exemptedTabs: {},
 
+    sitekeyPatterns: [{hostname:[], pathname: [], search: []}],
+
+    _findSiteStoreKeyUrlPartPattern(part, url, patterns) {
+      if (!patterns || patterns.length === 0) return [];
+
+      return patterns.filter(
+        pattern => part in pattern
+        && pattern[part].some(regexp => regexp.test(url[part]))
+      );
+    },
+
+    _findSiteStoreKeyHostnamePattern(url, patterns) {
+      return this._findSiteStoreKeyUrlPartPattern("hostname", url, patterns);
+    },
+
+    _findSiteStoreKeyPathnamePattern(url, patterns) {
+      return this._findSiteStoreKeyUrlPartPattern("pathname", url, patterns);
+    },
+
+    _findSiteStoreKeySearchPattern(url, patterns) {
+      return this._findSiteStoreKeyUrlPartPattern("search", url, patterns);
+    },
+
+    _getSiteStoreKeyUrlPart(part, url, patterns) {
+      return patterns.map(
+        pattern => pattern[part].map(
+          regexp => Object
+            .entries((regexp.exec(url[part]) || {}).groups || {})
+            .map(([key, value]) => value ? key : "")
+            .flat()
+        ).flat()
+      ).flat();
+    },
+
+    _getSiteStoreKeyHostname(url, patterns) {
+      return this._getSiteStoreKeyUrlPart("hostname", url, patterns);
+    },
+
+    _getSiteStoreKeyPathname(url, patterns) {
+      return this._getSiteStoreKeyUrlPart("pathname", url, patterns);
+    },
+
+    _getSiteStoreKeySearch(url, patterns) {
+      return this._getSiteStoreKeyUrlPart("search", url, patterns);
+    },
+
+    _getSiteStoreKeySuffix(url, patterns) {
+      if (!patterns || patterns.length === 0) return "";
+
+      let hostnamePattern = this._findSiteStoreKeyHostnamePattern(url, patterns);
+      let pathnamePattern = this._findSiteStoreKeyPathnamePattern(url, hostnamePattern);
+      const searchPattern = this._findSiteStoreKeySearchPattern(url, pathnamePattern);
+
+      const noSearch = pattern => !("search" in pattern);
+      const noPath = pattern => !("pathname" in pattern);
+
+      const matchSearch = searchPattern.length;
+      const matchPath = matchSearch || pathnamePattern.some(noSearch);
+      const matchHost = matchPath || hostnamePattern.some(noPath);
+
+      pathnamePattern = matchSearch && searchPattern || pathnamePattern.filter(noSearch);
+      hostnamePattern = matchPath && pathnamePattern || hostnamePattern.filter(noPath);
+
+      return [...new Set([
+        ...(matchHost ? this._getSiteStoreKeyHostname(url, hostnamePattern) : []),
+        ...(matchPath ? this._getSiteStoreKeyPathname(url, pathnamePattern) : []),
+        ...(matchSearch ? this._getSiteStoreKeySearch(url, searchPattern) : []),
+      ])].filter(str => !!str).join(",");
+    },
+
     getSiteStoreKey(pageUrlorUrlKey) {
       if (pageUrlorUrlKey.includes("siteContainerMap@@_")) return pageUrlorUrlKey;
       const url = new window.URL(pageUrlorUrlKey);
+      const suffix = this._getSiteStoreKeySuffix(url, this.sitekeyPatterns);
       const storagePrefix = "siteContainerMap@@_";
-      if (url.port === "80" || url.port === "443") {
+      if (suffix !== "") {
+        return `${storagePrefix}${suffix}`;
+      } else if (url.port === "80" || url.port === "443") {
         return `${storagePrefix}${url.hostname}`;
       } else {
         return `${storagePrefix}${url.hostname}${url.port}`;
@@ -54,6 +127,20 @@ window.assignManager = {
     async getReplaceTabEnabled() {
       const { replaceTabEnabled } = await browser.storage.local.get("replaceTabEnabled");
       return !!replaceTabEnabled;
+    },
+
+    async getSitekeyPatterns() {
+      const {sitekeyPatterns} = await browser.storage.local.get({
+        sitekeyPatterns: [{hostname:[], pathname: [], search: []}]
+      });
+      return sitekeyPatterns.map(
+        pattern => Object.entries(pattern)
+          .filter(([, rows]) => rows.filter(s => !!s).length)
+          .reduce((result, [partId, rows]) => ({
+            ...result,
+            [partId]: rows.filter(s => !!s).map(s => new RegExp(s))
+          }), {})
+      );
     },
 
     getByUrlKey(siteStoreKey) {
@@ -224,6 +311,7 @@ window.assignManager = {
     if (options.frameId !== 0 || options.tabId === -1) {
       return {};
     }
+    this.storageArea.sitekeyPatterns = await this.storageArea.getSitekeyPatterns();
     this.removeContextMenu();
     const [tab, siteSettings] = await Promise.all([
       browser.tabs.get(options.tabId),
